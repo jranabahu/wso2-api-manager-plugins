@@ -40,6 +40,8 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.apiManager.plugin.constants.APIConstants;
 import org.wso2.apiManager.plugin.dataObjects.APIInfo;
 
@@ -55,6 +57,8 @@ import java.util.List;
  * This class is responsible for connecting to WSO2 API Manager and fetching APIs and their definitions
  */
 public class APIManagerClient {
+    private static final Logger logger = LoggerFactory.getLogger(APIManagerClient.class);
+
     private static APIManagerClient apiManagerClient = null;
     private HttpContext httpContext = new BasicHttpContext();
     private HttpClient httpClient;

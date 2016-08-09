@@ -18,7 +18,6 @@
 
 package org.wso2.apiManager.plugin.workspace;
 
-import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.WorkspaceImpl;
 import com.eviware.soapui.impl.rest.RestService;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
@@ -31,7 +30,8 @@ import com.eviware.x.form.XFormDialog;
 import com.eviware.x.form.XFormField;
 import com.eviware.x.form.XFormFieldValidator;
 import com.eviware.x.form.support.ADialogBuilder;
-import com.eviware.x.impl.swing.JComboBoxFormField;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.apiManager.plugin.Utils;
 import org.wso2.apiManager.plugin.dataObjects.APIExtractionResult;
 import org.wso2.apiManager.plugin.dataObjects.APIInfo;
@@ -53,6 +53,8 @@ import static org.wso2.apiManager.plugin.constants.HelpMessageConstants.USER_NAM
  */
 @PluginImportMethod(label = "Import from WSO2 API Manager")
 public class WSO2APIManagerWorkspace extends AbstractSoapUIAction<WorkspaceImpl> {
+    private static final Logger logger = LoggerFactory.getLogger(WSO2APIManagerWorkspace.class);
+
     private APIExtractionResult listExtractionResult = null;
 
     public WSO2APIManagerWorkspace() {
@@ -87,8 +89,7 @@ public class WSO2APIManagerWorkspace extends AbstractSoapUIAction<WorkspaceImpl>
                 if (storeUrl == null) {
                     return new ValidationMessage[]{new ValidationMessage(INVALID_API_STORE_URL, formField)};
                 }
-                listExtractionResult =
-                        APIExtractorWorker.downloadAPIList(storeUrl.toString(),
+                listExtractionResult = APIExtractorWorker.downloadAPIList(storeUrl.toString(),
                                                            dialog.getValue(ProjectModel.USER_NAME),
                                                            dialog.getValue(ProjectModel.PASSWORD).toCharArray(),
                                                            dialog.getValue(ProjectModel.TENANT_DOMAIN),
@@ -102,7 +103,7 @@ public class WSO2APIManagerWorkspace extends AbstractSoapUIAction<WorkspaceImpl>
 
         if (dialog.show() && listExtractionResult != null && !listExtractionResult.isCanceled()) {
             APISelectionResult selectionResult = Utils.showSelectAPIDefDialog(listExtractionResult.getApiList());
-            if(selectionResult == null){
+            if (selectionResult == null) {
                 return;
             }
 
@@ -112,12 +113,15 @@ public class WSO2APIManagerWorkspace extends AbstractSoapUIAction<WorkspaceImpl>
                 try {
                     project = workspace.createProject(dialog.getValue(ProjectModel.PROJECT_NAME), null);
                 } catch (Exception e) {
-                    SoapUI.logError(e);
-                    UISupport.showErrorMessage(String.format("Unable to create Project because of %s exception with "
-                                                             + "\"%s\" message", e.getClass().getName(), e.getMessage
-                            ()));
+                    // If any exception happens during the project creation, we log an error and return the flow.
+                    String msg = String.format("Unable to create Project because of %s exception with " + "\"%s\" " +
+                                               "message", e.getClass().getName(), e.getMessage());
+                    logger.error(msg, e);
+                    UISupport.showErrorMessage(msg);
                     return;
                 }
+
+                // Once the project is created, we import the services from the list of APIs
                 List<RestService> services = APIImporterWorker.importServices(selectionResult, project);
                 if (services != null && !services.isEmpty()) {
                     UISupport.select(services.get(0));

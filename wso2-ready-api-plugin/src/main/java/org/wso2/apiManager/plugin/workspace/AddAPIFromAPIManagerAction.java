@@ -30,7 +30,6 @@ import com.eviware.x.form.XFormDialog;
 import com.eviware.x.form.XFormField;
 import com.eviware.x.form.XFormFieldValidator;
 import com.eviware.x.form.support.ADialogBuilder;
-import com.eviware.x.impl.swing.JComboBoxFormField;
 import org.wso2.apiManager.plugin.ActionGroups;
 import org.wso2.apiManager.plugin.Utils;
 import org.wso2.apiManager.plugin.dataObjects.APIExtractionResult;

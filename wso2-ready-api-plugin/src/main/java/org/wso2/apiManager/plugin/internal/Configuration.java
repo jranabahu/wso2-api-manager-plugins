@@ -21,26 +21,62 @@ package org.wso2.apiManager.plugin.internal;
 public class Configuration {
     private static final Configuration instance = new Configuration();
 
-    private String readyAPIVersion;
-    private String apiManagerVersion;
+    private String projectName;
+    private String storeUrl;
+    private String userName;
+    private char[] password;
+    private String tenantDomain;
+    private String productVersion;
 
-    public static Configuration getInstance(){
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public static Configuration getInstance() {
         return instance;
     }
 
-    public String getReadyAPIVersion() {
-        return readyAPIVersion;
+    public String getStoreUrl() {
+        return storeUrl;
     }
 
-    public void setReadyAPIVersion(String readyAPIVersion) {
-        this.readyAPIVersion = readyAPIVersion;
+    public void setStoreUrl(String storeUrl) {
+        this.storeUrl = storeUrl;
     }
 
-    public String getApiManagerVersion() {
-        return apiManagerVersion;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setApiManagerVersion(String apiManagerVersion) {
-        this.apiManagerVersion = apiManagerVersion;
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public char[] getPassword() {
+        return password.clone();
+    }
+
+    public void setPassword(char[] password) {
+        this.password = password.clone();
+    }
+
+    public String getTenantDomain() {
+        return tenantDomain;
+    }
+
+    public void setTenantDomain(String tenantDomain) {
+        this.tenantDomain = tenantDomain;
+    }
+
+    public String getProductVersion() {
+        return productVersion;
+    }
+
+    public void setProductVersion(String productVersion) {
+        this.productVersion = productVersion;
     }
 }

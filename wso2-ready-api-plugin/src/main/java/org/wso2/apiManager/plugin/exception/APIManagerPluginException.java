@@ -16,18 +16,23 @@
 * under the License.
 */
 
-package org.wso2.apiManager.plugin.client;
+package org.wso2.apiManager.plugin.exception;
 
-import org.wso2.apiManager.plugin.dataObjects.APIInfo;
+public class APIManagerPluginException extends Exception{
+    public APIManagerPluginException(String message) {
+        super(message);
+    }
 
-import java.util.List;
+    public APIManagerPluginException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-public interface APIManagerClient {
-    /**
-     * This is a method to initialize the client.
-     * This will be called by the ClientFactory when getting the client instance.
-     */
-    void initialize();
+    public APIManagerPluginException() {
+        super();
+    }
 
-    List<APIInfo> getAllPublishedAPIs() throws Exception;
+    @Override
+    public String getMessage() {
+        return "[API Manager Integration Plugin] " + super.getMessage();
+    }
 }

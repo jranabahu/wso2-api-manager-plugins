@@ -16,21 +16,21 @@
 * under the License.
 */
 
-package org.wso2.apiManager.plugin.worker
+package org.wso2.apiManager.plugin.worker;
 
-import com.eviware.soapui.SoapUI
-import com.eviware.soapui.config.CredentialsConfig
-import com.eviware.soapui.config.TestStepConfig
-import com.eviware.soapui.impl.AuthRepository.AuthEntries
-import com.eviware.soapui.impl.AuthRepository.Impl.AuthRepositoryImpl
-import com.eviware.soapui.impl.rest.RestMethod
-import com.eviware.soapui.impl.rest.RestRequest
-import com.eviware.soapui.impl.rest.RestResource
-import com.eviware.soapui.impl.rest.RestService
-import com.eviware.soapui.impl.wsdl.WsdlProject
-import com.eviware.soapui.impl.wsdl.WsdlTestSuite
-import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase
-import com.eviware.soapui.impl.wsdl.teststeps.registry.RestRequestStepFactory
+import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.config.CredentialsConfig;
+import com.eviware.soapui.config.TestStepConfig;
+import com.eviware.soapui.impl.AuthRepository.AuthEntries;
+import com.eviware.soapui.impl.AuthRepository.Impl.AuthRepositoryImpl;
+import com.eviware.soapui.impl.rest.RestMethod;
+import com.eviware.soapui.impl.rest.RestRequest;
+import com.eviware.soapui.impl.rest.RestResource;
+import com.eviware.soapui.impl.rest.RestService;
+import com.eviware.soapui.impl.wsdl.WsdlProject;
+import com.eviware.soapui.impl.wsdl.WsdlTestSuite;
+import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
+import com.eviware.soapui.impl.wsdl.teststeps.registry.RestRequestStepFactory;
 import com.eviware.soapui.support.StringUtils
 import com.eviware.soapui.support.UISupport
 import com.eviware.x.dialogs.Worker
@@ -46,7 +46,7 @@ import org.wso2.apiManager.plugin.dataObjects.APISelectionResult
 public class APIImporterWorker implements Worker {
     private static final Logger logger = LoggerFactory.getLogger(APIImporterWorker.class);
 
-    StringBuilder errors = new StringBuilder();
+    String errors = "";
 
     private XProgressDialog waitDialog;
     private boolean cancelled = false;

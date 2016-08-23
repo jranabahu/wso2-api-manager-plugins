@@ -36,6 +36,8 @@ import org.wso2.apiManager.plugin.Utils;
 import org.wso2.apiManager.plugin.dataObjects.APIExtractionResult;
 import org.wso2.apiManager.plugin.dataObjects.APIInfo;
 import org.wso2.apiManager.plugin.dataObjects.APISelectionResult;
+import org.wso2.apiManager.plugin.exception.APIManagerPluginException;
+import org.wso2.apiManager.plugin.internal.Configuration;
 import org.wso2.apiManager.plugin.ui.ProjectModel;
 import org.wso2.apiManager.plugin.worker.APIExtractorWorker;
 import org.wso2.apiManager.plugin.worker.APIImporterWorker;
@@ -61,7 +63,7 @@ public class WSO2APIManagerWorkspace extends AbstractSoapUIAction<WorkspaceImpl>
         super("Create Project from WSO2 API Manager", "Creates new project from API specifications on the API Store");
     }
 
-    public void perform(WorkspaceImpl workspace, Object params) {
+    public void perform(WorkspaceImpl workspace, final Object params) {
         final XFormDialog dialog = ADialogBuilder.buildDialog(ProjectModel.class);
 
         /*
@@ -69,15 +71,38 @@ public class WSO2APIManagerWorkspace extends AbstractSoapUIAction<WorkspaceImpl>
          */
         dialog.getFormField(ProjectModel.API_STORE_URL).addFormFieldValidator(new XFormFieldValidator() {
             public ValidationMessage[] validateField(XFormField formField) {
-                if (StringUtils.isNullOrEmpty(dialog.getValue(ProjectModel.API_STORE_URL))) {
+                String storeUrlValue = formField.getValue();
+
+                // We validate the Store URL first.
+                URL storeUrl = Utils.validateURL(storeUrlValue);
+                if (storeUrl == null) {
+                    return new ValidationMessage[]{new ValidationMessage(INVALID_API_STORE_URL, formField)};
+                }
+
+                String userName = dialog.getValue(ProjectModel.USER_NAME);
+                char[] password = dialog.getValue(ProjectModel.PASSWORD).toCharArray();
+                String projectVersion = dialog.getValue(ProjectModel.PRODUCT_VERSION);
+                String projectName = dialog.getValue(ProjectModel.PROJECT_NAME);
+
+                // At this point, we keep these values to that we can use them later in the same session or to be
+                // saved later when the project is saved.
+                Configuration configuration = Configuration.getInstance();
+                configuration.setProjectName(projectName);
+                configuration.setStoreUrl(storeUrlValue);
+                configuration.setUserName(userName);
+                configuration.setPassword(password);
+                configuration.setTenantDomain(Utils.getTenantDomain(userName));
+                configuration.setProductVersion(projectVersion);
+
+                if (StringUtils.isNullOrEmpty(storeUrlValue)) {
                     return new ValidationMessage[]{new ValidationMessage(INVALID_API_STORE_URL, dialog.getFormField
                             (ProjectModel.API_STORE_URL))};
                 }
-                if (StringUtils.isNullOrEmpty(dialog.getValue(ProjectModel.PROJECT_NAME))) {
+                if (StringUtils.isNullOrEmpty(projectName)) {
                     return new ValidationMessage[]{new ValidationMessage(PROJECT_NAME_VALIDATION_MSG, dialog
                             .getFormField(ProjectModel.PROJECT_NAME))};
                 }
-                if (StringUtils.isNullOrEmpty(dialog.getValue(ProjectModel.USER_NAME))) {
+                if (StringUtils.isNullOrEmpty(userName)) {
                     return new ValidationMessage[]{new ValidationMessage(USER_NAME_VALIDATION_MSG, dialog
                             .getFormField(ProjectModel.USER_NAME))};
                 }
@@ -85,25 +110,36 @@ public class WSO2APIManagerWorkspace extends AbstractSoapUIAction<WorkspaceImpl>
                     return new ValidationMessage[]{new ValidationMessage(PASSWORD_VALIDATION_MSG, dialog.getFormField
                             (ProjectModel.PASSWORD))};
                 }
-                URL storeUrl = Utils.validateURL(formField.getValue());
-                if (storeUrl == null) {
-                    return new ValidationMessage[]{new ValidationMessage(INVALID_API_STORE_URL, formField)};
-                }
-                listExtractionResult = APIExtractorWorker.downloadAPIList(storeUrl.toString(),
-                                                           dialog.getValue(ProjectModel.USER_NAME),
-                                                           dialog.getValue(ProjectModel.PASSWORD).toCharArray(),
-                                                           dialog.getValue(ProjectModel.TENANT_DOMAIN),
-                                                           dialog.getValue(ProjectModel.PRODUCT_VERSION));
-                if (StringUtils.hasContent(listExtractionResult.getError())) {
-                    return new ValidationMessage[]{new ValidationMessage(listExtractionResult.getError(), formField)};
+
+                try {
+                    listExtractionResult = APIExtractorWorker.downloadAPIList();
+                } catch (APIManagerPluginException e) {
+                    // An exception has been thrown when trying to extract the list of APIs from the store.
+                    // We expose that as a validation message for the user because this can happen due to
+                    // misinformation given by the user.
+                    if (StringUtils.hasContent(listExtractionResult.getError())) {
+                        return new ValidationMessage[]{new ValidationMessage(listExtractionResult.getError(), formField)};
+                    }
                 }
                 return new ValidationMessage[0];
             }
         });
 
+        // If the values are been set previously, we populate the dialog with the same values
+        Configuration configuration = Configuration.getInstance();
+        if (configuration.getStoreUrl() != null) {
+            dialog.setValue(ProjectModel.API_STORE_URL, configuration.getStoreUrl());
+        }
+        if (configuration.getUserName() != null) {
+            dialog.setValue(ProjectModel.USER_NAME, configuration.getUserName());
+        }
+
         if (dialog.show() && listExtractionResult != null && !listExtractionResult.isCanceled()) {
             APISelectionResult selectionResult = Utils.showSelectAPIDefDialog(listExtractionResult.getApiList());
             if (selectionResult == null) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Selected API List is empty");
+                }
                 return;
             }
 
@@ -131,6 +167,4 @@ public class WSO2APIManagerWorkspace extends AbstractSoapUIAction<WorkspaceImpl>
             }
         }
     }
-
-
 }

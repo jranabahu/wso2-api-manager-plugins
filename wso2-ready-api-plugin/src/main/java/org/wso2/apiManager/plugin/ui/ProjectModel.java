@@ -45,11 +45,6 @@ public interface ProjectModel {
             type = AField.AFieldType.PASSWORD)
     public final static String PASSWORD = "API Store password";
 
-    @AField(name = "Tenant Domain",
-            description = "The tenant domain of the store",
-            type = AField.AFieldType.STRING)
-    public final static String TENANT_DOMAIN = "Tenant Domain";
-
     @AField(name = "API Manager Version",
             description = "The version of the API Manager that is been used",
             type = AField.AFieldType.COMBOBOX, values = {"2.0.0", "1.10.0", "1.9.x", "1.8.0"})

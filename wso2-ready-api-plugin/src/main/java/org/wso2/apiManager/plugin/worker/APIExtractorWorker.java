@@ -24,44 +24,42 @@ import com.eviware.soapui.support.UISupport;
 import com.eviware.x.dialogs.Worker;
 import com.eviware.x.dialogs.XProgressDialog;
 import com.eviware.x.dialogs.XProgressMonitor;
-import org.wso2.apiManager.plugin.client.APIManagerClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.wso2.apiManager.plugin.client.APIManagerClientFactory;
 import org.wso2.apiManager.plugin.dataObjects.APIExtractionResult;
+import org.wso2.apiManager.plugin.exception.APIManagerPluginException;
 
 /**
  * This class acts as the worker class to fetch APIs from WSO2 API Manager.
  */
 public class APIExtractorWorker implements Worker {
+    private static final Logger logger = LoggerFactory.getLogger(APIExtractorWorker.class);
+
     private XProgressDialog waitDialog = null;
     private APIExtractionResult result = new APIExtractionResult();
 
-    private String url = null;
-    private String userName;
-    private char[] password;
-    private String tenantDomain;
-    private String productVersion;
-
     private String apiRetrievingError = null;
 
-    public APIExtractorWorker(String url, String userName, char[] password, String tenantDomain, String productVersion,
-                              XProgressDialog waitDialog) {
+    public APIExtractorWorker(XProgressDialog waitDialog) {
         this.waitDialog = waitDialog;
-        this.url = url;
-        this.userName = userName;
-        this.password = password.clone(); // This is to fix findbugs Malicious code vulnerability
-        this.tenantDomain = tenantDomain;
-        this.productVersion = productVersion;
     }
 
-    public static APIExtractionResult downloadAPIList(String url, String userName, char[] password,
-                                                      String tenantDomain, String productVersion) {
-        APIExtractorWorker worker = new APIExtractorWorker(url, userName, password, tenantDomain, productVersion, UISupport
-                .getDialogs().createProgressDialog("Getting the list of APIs", 0, "", true));
+    public static APIExtractionResult downloadAPIList() throws APIManagerPluginException {
+        APIExtractorWorker worker =
+                new APIExtractorWorker(UISupport.getDialogs().createProgressDialog(
+                        "Getting the  list of  APIs", 0, "", true));
         try {
             worker.waitDialog.run(worker);
         } catch (Exception e) {
-            worker.waitDialog.setVisible(false);
             worker.result.setError(e.getMessage());
-            SoapUI.logError(e);
+
+            worker.waitDialog.setVisible(false);
+            worker.waitDialog.dispose();
+
+            String msg = "Unable to download the list of APIs from WSO2 API Store";
+            logger.error(msg, e);
+            throw new APIManagerPluginException(msg, e);
         }
         return worker.result;
     }
@@ -69,8 +67,7 @@ public class APIExtractorWorker implements Worker {
     @Override
     public Object construct(XProgressMonitor xProgressMonitor) {
         try {
-            result.setApiList(APIManagerClient.getInstance().getAllPublishedAPIs(url, userName, password,
-                                                                                 tenantDomain, productVersion));
+            result.setApiList(APIManagerClientFactory.getInstance().getAllPublishedAPIs());
         } catch (Exception e) {
             SoapUI.logError(e);
             apiRetrievingError = e.getMessage();

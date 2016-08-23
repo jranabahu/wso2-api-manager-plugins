@@ -232,7 +232,7 @@ public class Utils {
             } else if (importer.getClass().getName().contains("Swagger1XImporter")) {
                 project.setPropertyValue(apiLink.getSwaggerDocLink(), "1.x");
             } else {
-               SoapUI.log("Unable to determine the Swagger version of [" + apiLink.getSwaggerDocLink() + "]" );
+                SoapUI.log("Unable to determine the Swagger version of [" + apiLink.getSwaggerDocLink() + "]");
             }
 
             return importer.importSwagger(apiLink.getSwaggerDocLink());
@@ -253,5 +253,23 @@ public class Utils {
             convertedData[i][3] = apiInfo.getDescription();
         }
         return convertedData;
+    }
+
+    /**
+     * This is a method to extract the tenant domain from the user name. If the user name does not contain the tenant
+     * domain, it will return the super tenant domain name.
+     *
+     * @param userName The user name
+     * @return The tenant domain that is extracted from the user name
+     */
+    public static String getTenantDomain(String userName) {
+        int tenantDomainIndex = userName.indexOf('@');
+        if (tenantDomainIndex > 0) {
+            // This means the user name contains tenant domain
+            return userName.substring(0, tenantDomainIndex);
+        }
+        // We are not using the multi-tenant constants because we do not want to pack lot of dependencies with the
+        // plugin.
+        return APIConstants.CARBON_SUPER;
     }
 }

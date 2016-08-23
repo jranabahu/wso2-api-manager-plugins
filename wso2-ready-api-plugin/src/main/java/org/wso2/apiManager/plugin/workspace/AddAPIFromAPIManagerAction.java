@@ -35,6 +35,8 @@ import org.wso2.apiManager.plugin.Utils;
 import org.wso2.apiManager.plugin.dataObjects.APIExtractionResult;
 import org.wso2.apiManager.plugin.dataObjects.APIInfo;
 import org.wso2.apiManager.plugin.dataObjects.APISelectionResult;
+import org.wso2.apiManager.plugin.exception.APIManagerPluginException;
+import org.wso2.apiManager.plugin.internal.Configuration;
 import org.wso2.apiManager.plugin.ui.ImportModel;
 import org.wso2.apiManager.plugin.worker.APIExtractorWorker;
 import org.wso2.apiManager.plugin.worker.APIImporterWorker;
@@ -86,21 +88,31 @@ public class AddAPIFromAPIManagerAction extends AbstractSoapUIAction<WsdlProject
         }
 
         while (dialog.show()) {
-            String urlString = dialog.getValue(ImportModel.API_STORE_URL);
+            String storeUrlValue = dialog.getValue(ImportModel.API_STORE_URL);
             String userName = dialog.getValue(ImportModel.USER_NAME);
             char[] password = dialog.getValue(ImportModel.PASSWORD).toCharArray();
-            String tenantDomain = dialog.getValue(ImportModel.TENANT_DOMAIN);
-            String productVersion = dialog.getValue(ImportModel.PRODUCT_VERSION);
-            if (urlString == null) {
+            String projectVersion = dialog.getValue(ImportModel.PRODUCT_VERSION);
+            if (storeUrlValue == null) {
                 return;
             }
-            URL url = Utils.validateURL(urlString);
+            URL url = Utils.validateURL(storeUrlValue);
             if (url == null) {
                 UISupport.showErrorMessage(INVALID_API_STORE_URL);
                 continue;
             }
-            listExtractionResult = APIExtractorWorker.downloadAPIList(url.toString(), userName, password,
-                                                                      tenantDomain, productVersion);
+
+            Configuration configuration = Configuration.getInstance();
+            configuration.setStoreUrl(storeUrlValue);
+            configuration.setUserName(userName);
+            configuration.setPassword(password);
+            configuration.setTenantDomain(Utils.getTenantDomain(userName));
+            configuration.setProductVersion(projectVersion);
+
+            try {
+                listExtractionResult = APIExtractorWorker.downloadAPIList();
+            } catch (APIManagerPluginException e) {
+                e.printStackTrace();
+            }
             if (listExtractionResult.isCanceled()) {
                 return;
             }
